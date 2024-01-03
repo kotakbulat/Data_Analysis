@@ -1,0 +1,81 @@
+---
+title: "Laporan Praktek UTS Analitika Data"
+author: "Hoki"
+date: "2022-10-18"
+output: html_document
+---
+
+#To import the dataset in R
+
+```{r}
+#setwd("/")
+library('dplyr')
+library(tinytex)
+library("knitr")
+
+
+swmotor<-read.csv("swmotorcycle.csv",header=TRUE,sep=',')
+summary(swmotor)
+```
+
+# Turn the rating factors OwnerAge, Gender, age and BonusClass into categorical variables
+```{r}
+swmotor <- within(swmotor, {
+    Gender <- factor(Gender)
+    Area <- factor(Area)
+    OwnerAge <- factor(OwnerAge)
+    VehAge <- factor(VehAge)
+    BonusClass <- factor(BonusClass)
+    RiskClass <- factor(RiskClass)
+})
+```
+
+
+#AAAAAAAAAAAAAAAAAAAAAAAAAAA
+```{r}
+library(AER)
+library(pscl)
+library(MASS)
+#Regresi Poisson
+swm_pois<-glm(ClaimNb~.,data=swmotor,family=poisson)
+summary(swm_pois)
+```
+
+
+##########################################################################################################################################################################################################################################################################
+#BBBBBBBBBBBBBBBBBBBBBBBBBB
+
+```{r}
+#Regresi Negatif Binomial
+swm_nbin <- MASS::glm.nb(ClaimNb ~ ., data = swmotor)
+summary(swm_nbin)
+
+#Regresi Zero-Inflated
+swm_zinb0 <- zeroinfl(ClaimNb ~ ., data = swmotor, dist = "negbin")
+summary(swm_zinb0)
+
+#Regresi Zero-Inflated Poisson
+swm_zip <- zeroinfl(ClaimNb ~ ., data = swmotor, dist = "poisson")
+#(swm_zip)
+```
+```{r}
+#Pembandingan Model
+swm<-list("ML-Pois" = swm_pois,"NB" = swm_nbin, "ZINB" = swm_zinb0, "ZIP" = swm_zip)
+sapply(swm, function(x) coef(x)[1:8])
+
+cbind("ML-Pois" = sqrt(diag(vcov(swm_pois))),"Adj-Pois" = sqrt(diag(sandwich(swm_pois))),sapply(swm[-1], function(x) sqrt(diag(vcov(x)))[1:8]))
+
+
+
+rbind(logLik = sapply(swm, function(x) round(logLik(x), digits = 0)),Df = sapply(swm, function(x) attr(logLik(x), "df")),AIC = sapply(swm, function(x) round(AIC(x))),BIC = sapply(swm,function(x) round(BIC(x))))
+
+round(c("Obs" = sum(swmotor$ClaimNb < 1),
+        "ML-Pois" = sum(dpois(0, fitted(swm_pois))),
+        "NB" = sum(dnbinom(0, mu = fitted(swm_nbin), size = swm_nbin$theta)),
+        "ZINB" = sum(predict(swm_zinb0, type = "prob")[,1]),
+        "ZIP" = sum(predict(swm_zip, type = "prob")[,1])))
+```
+
+```{r}
+summary(swm_nbin)
+```

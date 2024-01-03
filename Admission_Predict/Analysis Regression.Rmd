@@ -1,0 +1,127 @@
+---
+title: "Quiz Analitika Data"
+author: "Hoki"
+date: "2022-10-19"
+output: html_document
+---
+
+#To import the dataset in R
+
+```{r}
+#setwd("/")
+library('dplyr')
+library(tinytex)
+library("knitr")
+
+
+admission<-read.csv("Admission_Predict.csv",header=TRUE,sep=',')
+admission <- select(admission, -Serial.No.)
+summary(admission)
+```
+#Uji Linearitas & Normalitas
+```{r}
+shapiro.test(admission$Chance.of.Admit)
+```
+
+```{r}
+shapiro.test(admission$Chance.of.Admit)
+plot(admission$GRE.Score,admission$Chance.of.Admit,main="Scatter Plot",
+xlab="GRE",ylab="Chance of Admit",pch=19)
+abline(lm(Chance.of.Admit~GRE.Score,data=admission),col="Blue")
+plot(admission$TOEFL.Score,admission$Chance.of.Admit,main="Scatter Plot",
+xlab="TOEFL",ylab="Chance of Admit",pch=19)
+abline(lm(Chance.of.Admit~TOEFL.Score,data=admission),col="Blue")
+plot(admission$University.Rating,admission$Chance.of.Admit,main="Scatter Plot",
+xlab="UNIV RATE",ylab="Chance of Admit",pch=19)
+abline(lm(Chance.of.Admit~University.Rating,data=admission),col="Blue")
+plot(admission$SOP,admission$Chance.of.Admit,main="Scatter Plot",
+xlab="SOP",ylab="Chance of Admit",pch=19)
+abline(lm(Chance.of.Admit~SOP,data=admission),col="Blue")
+plot(admission$LOR,admission$Chance.of.Admit,main="Scatter Plot",
+xlab="LOR",ylab="Chance of Admit",pch=19)
+abline(lm(Chance.of.Admit~LOR,data=admission),col="Blue")
+plot(admission$CGPA,admission$Chance.of.Admit,main="Scatter Plot",
+xlab="GPA",ylab="Chance of Admit",pch=19)
+abline(lm(Chance.of.Admit~CGPA,data=admission),col="Blue")
+plot(admission$Research,admission$Chance.of.Admit,main="Scatter Plot",
+xlab="Research",ylab="Chance of Admit",pch=19)
+abline(lm(Chance.of.Admit~Research,data=admission),col="Blue")
+```
+
+
+#Pembentukan Model dengan Backward elimination
+```{r}
+library(AER)
+library(pscl)
+library(MASS)
+#Regresi Normal
+admit_full<-glm(Chance.of.Admit~.,data=admission,family=gaussian)
+admit_backward <- stepAIC(admit_full,direction="backward",trace = FALSE)
+summary(admit_backward)
+```
+
+
+#Model Pembanding
+```{r}
+#Regresi Poisson
+admit_pois<-glm(Chance.of.Admit~.,data=admission,family=poisson)
+pois_backward <- stepAIC(admit_pois,direction="backward",trace = FALSE)
+summary(pois_backward)
+
+#Regresi Negatif Binomial
+admit_nbin <- MASS::glm.nb(Chance.of.Admit ~ ., data = admission)
+nbin_backward <- stepAIC(admit_nbin,direction="backward",trace = FALSE)
+summary(nbin_backward)
+
+#Regresi Zero-Inflated
+#admit_zinb0 <- zeroinfl(Chance.of.Admit ~ ., data = admission, dist = "negbin")
+#summary(admit_zinb0)
+
+#Regresi Zero-Inflated Poisson
+#admit_zip <- zeroinfl(Chance.of.Admit ~ ., data = admission, dist = "poisson")
+#summary(admit_zip)
+```
+
+Analisis Residual
+```{r}
+#normalitas residual
+shapiro.test(admit_backward$residuals)
+```
+```{r}
+#Grafik Normal Q-Q Plot
+qqnorm(resid(admit_backward))
+qqline(resid(admit_backward))
+```
+```{r}
+#homoskedastisitas
+plot(fitted(admit_backward),resid(admit_backward),
+xlab="Fitted Value",ylab="Std Residual",
+main="Residual Plot")
+abline(0,0)
+```
+```{r}
+#multikolinearitas
+library(car)
+vif(admit_backward)
+```
+```{r}
+#autokorelasi
+library(lmtest)
+dwtest(admit_backward)
+```
+
+#Soal no 7
+```{r}
+summary(admit_backward)
+Val = -1.2984636
+GRE = 0.0017820
+TOEFL = 0.0030320  
+LOR = 0.0227762  
+CGPA = 0.1210042  
+Research = 0.1210042  
+```
+
+```{r}
+Predict <- Val+(GRE*302)+(TOEFL*119)+(LOR*4)+(CGPA*8.8)+(0)
+Predict
+```

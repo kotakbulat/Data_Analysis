@@ -1,0 +1,175 @@
+---
+title: "Laporan Pratek UTS Analitika Data"
+author: "Hoki"
+date: "2022-10-17"
+output: html_document
+---
+
+#To import the dataset in R
+
+```{r}
+#setwd("/")
+library('dplyr')
+library(tinytex)
+library("knitr")
+
+
+swmotor<-read.csv("swmotorcycle.csv",header=TRUE,sep=',')
+summary(swmotor)
+```
+# Turn the rating factors OwnerAge, Gender, age and BonusClass into categorical variables
+```{r}
+swmotor <- within(swmotor, {
+    Gender <- factor(Gender)
+    Area <- factor(Area)
+    OwnerAge <- factor(OwnerAge)
+    VehAge <- factor(VehAge)
+    BonusClass <- factor(BonusClass)
+    RiskClass <- factor(RiskClass)
+})
+```
+# The number of tariff cells is 
+```{r}
+nrow(swmotor)
+```
+# Number of categories for each rating factor
+```{r}
+levels(swmotor$OwnerAge)
+levels(swmotor$Gender)
+#levels(swmotor$Area)
+#levels(swmotor$RiskClass)
+levels(swmotor$VehAge)
+levels(swmotor$BonusClass)
+levels(swmotor$ClaimNb)
+```
+
+#pengkategorian variabel
+```{r}
+swmotor1 <- swmotor
+levels(swmotor1$VehAge)<-recode(levels(swmotor1$VehAge), "0"="0-20","1"="0-20","2"="0-20","3"="0-20","4"="0-20","5"="0-20","6"="0-20","7"="0-20","8"="0-20","9"="0-20","10"="0-20","11"="0-20","12"="0-20","13"="0-20","14"="0-20","15"="0-20","16"="0-20","17"="0-20","18"="0-20","19"="0-20","20"="0-20","21"="21-40","22"="21-40","23"="21-40","24"="21-40","25"="21-40","26"="21-40","27"="21-40","28"="21-40","29"="21-40","30"="21-40","31"="21-40","32"="21-40","33"="21-40","34"="21-40","35"="21-40","36"="21-40","37"="21-40","38"="21-40","39"="21-40","40"="21-40","41"="41-60","42"="41-60","43"="41-60","44"="41-60","45"="41-60","46"="41-60","47"="41-60","48"="41-60","49"="41-60","50"="41-60","51"="41-60","52"="41-60","53"="41-60","54"="41-60","55"="41-60","56"="41-60","57"="41-60","58"="41-60","59"="41-60","60"="41-60","61"="61-99","62"="61-99","63"="61-99","64"="61-99","65"="61-99","66"="61-99","67"="61-99","68"="61-99","69"="61-99","70"="61-99","71"="61-99","72"="61-99","73"="61-99","74"="61-99","75"="61-99","76"="61-99","77"="61-99","78"="61-99","79"="61-99","80"="61-99","81"="61-99","82"="61-99","83"="61-99","99"="61-99")
+levels(swmotor1$OwnerAge)<-recode(levels(swmotor1$OwnerAge), "0"="0-17","4"="0-17","5"="0-17","6"="0-17","9"="0-17","10"="0-17","11"="0-17","12"="0-17","13"="0-17","14"="0-17","15"="0-17","16"="0-17","17"="0-17","18"="18-45","19"="18-45","20"="18-45","21"="18-45","22"="18-45","23"="18-45","24"="18-45","25"="18-45","26"="18-45","27"="18-45","28"="18-45","29"="18-45","30"="18-45","31"="18-45","32"="18-45","33"="18-45","34"="18-45","35"="18-45","36"="18-45","37"="18-45","38"="18-45","39"="18-45","40"="18-45","41"="18-45","42"="18-45","43"="18-45","44"="18-45","45"="18-45","46"="46-99","47"="46-99","48"="46-99","49"="46-99","50"="46-99","51"="46-99","52"="46-99","53"="46-99","54"="46-99","55"="46-99","56"="46-99","57"="46-99","58"="46-99","59"="46-99","60"="46-99","61"="46-99","62"="46-99","63"="46-99","64"="46-99","65"="46-99","66"="46-99","67"="46-99","68"="46-99","69"="46-99","70"="46-99","71"="46-99","72"="46-99","73"="46-99","74"="46-99","75"="46-99","76"="46-99","77"="46-99","78"="46-99","79"="46-99","80"="46-99","81"="46-99","82"="46-99","83"="46-99","84"="46-99","85"="46-99","86"="46-99","87"="46-99","91"="46-99","92"="46-99")
+
+```
+
+
+```{r}
+levels(swmotor1$OwnerAge)
+levels(swmotor1$Gender)
+levels(swmotor1$Area)
+levels(swmotor1$RiskClass)
+levels(swmotor1$VehAge)
+levels(swmotor1$BonusClass)
+levels(swmotor1$ClaimNb)
+```
+
+#Pembentukan Model GLM 1
+```{r}
+glmswm1=glm(ClaimNb~OwnerAge + Gender + Area + RiskClass + VehAge + BonusClass, data=swmotor1, family=poisson) 
+summary(glmswm1)
+
+```
+```{r}
+glmswm0=glm(ClaimNb~1, data=swmotor1, family=poisson) 
+summary(glmswm0)
+#Uji Rasio Likeliood
+L=deviance(glmswm0)-deviance(glmswm1)
+L 
+
+pchisq(L, df.residual(glmswm0) - df.residual(glmswm1), lower.tail=FALSE) 
+
+#Analisis Deviansi
+anova(glmswm1, test="Chisq")
+```
+
+
+########################################################################################################################################################
+
+#Model GLM 2 (GLM 1 -BonusClass)
+```{r}
+glmswm2=glm(ClaimNb~OwnerAge + Gender + Area + RiskClass + VehAge , data=swmotor1, family=poisson) 
+summary(glmswm2)
+#Uji Rasio Likeliood
+L=deviance(glmswm0)-deviance(glmswm2)
+L 
+
+pchisq(L, df.residual(glmswm0) - df.residual(glmswm2), lower.tail=FALSE) 
+
+#Analisis Deviansi
+anova(glmswm2, test="Chisq")
+```
+
+
+########################################################################################################################################################
+
+#Model 3 (GLM 1 -RiskClass)
+```{r}
+glmswm3=glm(ClaimNb~OwnerAge + Gender + Area  + VehAge + BonusClass, data=swmotor1, family=poisson) 
+summary(glmswm3)
+#Uji Rasio Likeliood
+L=deviance(glmswm0)-deviance(glmswm3)
+L 
+
+pchisq(L, df.residual(glmswm0) - df.residual(glmswm3), lower.tail=FALSE) 
+
+#Analisis Deviansi
+anova(glmswm3, test="Chisq")
+```
+
+########################################################################################################################################################
+
+#Model 4 (GLM 1 -RiskClass&BonusClass)
+```{r}
+glmswm4=glm(ClaimNb~OwnerAge + Gender + Area + VehAge , data=swmotor1, family=poisson) 
+summary(glmswm4)
+#Uji Rasio Likeliood
+L=deviance(glmswm0)-deviance(glmswm4)
+L 
+
+pchisq(L, df.residual(glmswm0) - df.residual(glmswm4), lower.tail=FALSE) 
+
+#Analisis Deviansi
+anova(glmswm4, test="Chisq")
+```
+
+####################################################################################################################################################################################################################################
+
+#Model Pembanding dengan Distribusi lain
+```{r}
+library(AER)
+library(pscl)
+library(MASS)
+#Regresi Poisson
+swm_pois<-glm(ClaimNb~.,data=swmotor1,family=poisson)
+summary(swm_pois)
+
+#coeftest(swm_pois, vcov = sandwich)
+
+#Regresi Negatif Binomial
+swm_nbin <- MASS::glm.nb(ClaimNb ~ ., data = swmotor1)
+summary(swm_nbin)
+
+#Regresi Zero-Inflated
+swm_zinb0 <- zeroinfl(ClaimNb ~ ., data = swmotor1, dist = "negbin")
+summary(swm_zinb0)
+
+#Regresi Zero-Inflated Poisson
+swm_zip <- zeroinfl(ClaimNb ~ ., data = swmotor1, dist = "poisson")
+summary(swm_zip)
+
+#Pembandingan Model
+swm<-list("ML-Pois" = swm_pois,"NB" = swm_nbin, "ZINB" = swm_zinb0, "ZIP" = swm_zip)
+sapply(swm, function(x) coef(x)[1:8])
+
+cbind("ML-Pois" = sqrt(diag(vcov(swm_pois))),"Adj-Pois" = sqrt(diag(sandwich(swm_pois))),sapply(swm[-1], function(x) sqrt(diag(vcov(x)))[1:8]))
+
+
+
+rbind(logLik = sapply(swm, function(x) round(logLik(x), digits = 0)),Df = sapply(swm, function(x) attr(logLik(x), "df")),AIC = sapply(swm, function(x) round(AIC(x))),BIC = sapply(swm,function(x) round(BIC(x))))
+
+round(c("Obs" = sum(swmotor1$ClaimNb < 1),
+        "ML-Pois" = sum(dpois(0, fitted(swm_pois))),
+        "NB" = sum(dnbinom(0, mu = fitted(swm_nbin), size = swm_nbin$theta)),
+        "ZINB" = sum(predict(swm_zinb0, type = "prob")[,1]),
+        "ZIP" = sum(predict(swm_zip, type = "prob")[,1])))
+
+```
